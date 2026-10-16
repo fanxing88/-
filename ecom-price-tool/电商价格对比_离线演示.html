@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>电商价格采集与对比 · 离线演示版</title>
+<style>
+:root {
+  --bg:#f4f6fa; --card:#fff; --line:#e5e9f0; --text:#1f2733; --muted:#6b7280;
+  --accent:#2563eb; --accent-2:#1e3a8a; --good:#0a7d34;
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.55; }
+.wrap { max-width:1200px; margin:0 auto; padding:24px 20px 80px; }
+.hero { background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#3b82f6); color:#fff; border-radius:16px;
+  padding:30px 28px; box-shadow:0 10px 30px rgba(37,99,235,.25); }
+.hero h1 { margin:0 0 8px; font-size:26px; }
+.hero p { margin:0; opacity:.92; font-size:14px; }
+.hero .tag { display:inline-block; margin-top:12px; font-size:12px; padding:3px 10px; border-radius:20px;
+  background:rgba(255,255,255,.18); }
+.control { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px;
+  margin:20px 0; display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+.control input[type="text"] { flex:1 1 240px; padding:11px 14px; border:1px solid var(--line);
+  border-radius:10px; font-size:15px; }
+.control input[type="number"] { width:80px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; }
+.control button { padding:11px 22px; background:var(--accent); color:#fff; border:none; border-radius:10px;
+  font-size:15px; cursor:pointer; font-weight:600; }
+.control button:hover { background:var(--accent-2); }
+.hint { background:#eef2ff; border:1px solid #dbe4ff; color:#3730a3; padding:10px 14px; border-radius:10px;
+  font-size:13px; margin-bottom:16px; }
+.section-title { font-size:15px; font-weight:700; margin:22px 0 12px; display:flex; align-items:center; gap:8px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:14px 0; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+.card .k { font-size:12px; color:var(--muted); }
+.card .v { font-size:22px; font-weight:700; margin-top:6px; }
+.card .v small { font-size:12px; font-weight:400; color:var(--muted); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:860px) { .grid { grid-template-columns:1fr; } }
+.panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+.panel h2 { font-size:15px; margin:0 0 14px; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:860px) { .two-col { grid-template-columns:1fr; } }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--muted); font-weight:600; white-space:nowrap; }
+tr:hover td { background:#f8fafc; }
+a { color:var(--accent); text-decoration:none; }
+.num { font-variant-numeric:tabular-nums; }
+.badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:12px; color:#fff; white-space:nowrap; }
+.raw-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+.raw-item { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; font-size:13px; }
+.raw-item .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:6px; background:#eef2ff; color:#3730a3; margin-bottom:6px; }
+.raw-item .t { font-weight:600; margin-bottom:6px; }
+.raw-item .meta { color:var(--muted); font-size:12px; }
+/* 横向条形图 */
+.bars { display:flex; flex-direction:column; gap:7px; }
+.bar-row { display:grid; grid-template-columns:120px 1fr 70px; gap:10px; align-items:center; font-size:12px; }
+.bar-label { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bar-track { background:#f1f4f9; border-radius:6px; height:16px; overflow:hidden; }
+.bar-fill { display:block; height:100%; border-radius:6px; transition:width .4s; }
+.bar-val { text-align:right; font-weight:600; }
+/* 折线图 */
+.trend-svg { width:100%; height:auto; display:block; }
+.legend { display:flex; flex-wrap:wrap; gap:10px 16px; margin-top:8px; font-size:12px; color:var(--muted); }
+.legend span { display:inline-flex; align-items:center; gap:5px; }
+.legend i { width:12px; height:3px; border-radius:2px; display:inline-block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>🛒 电商商品价格采集与对比工具</h1>
+    <p>离线演示版 · 数据在浏览器内本地生成，不依赖任何后端或网络，双击即可使用。</p>
+    <span class="tag">京东 / 淘宝 / 拼多多 · 演示数据源</span>
+  </div>
+
+  <div class="control">
+    <input type="text" id="keyword" placeholder="输入关键词，如：蓝牙耳机、机械键盘、保温杯…" value="">
+    <label style="font-size:13px;color:var(--muted)">每平台条数
+      <input type="number" id="limit" value="8" min="3" max="30">
+    </label>
+    <button id="run">开始采集</button>
+  </div>
+  <div class="hint">下方为初始化示例：左侧「数据示例」为原始采集记录，右侧「结果示例」为清洗、排序、分析后的完整结果。</div>
+
+  <div id="sample-area"></div>
+  <div id="result-area"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const PLATFORM_NAMES = { jd:"京东", taobao:"淘宝", pdd:"拼多多" };
+const BADGE_COLORS = { "性价比推荐":"#0a7d34", "价格优势":"#0d6efd", "评分优势":"#8a5cf6", "一般":"#6c757d" };
+const LINE_COLORS = ["#2563eb","#f59e0b","#0a7d34","#dc2626","#8a5cf6"];
+const BRANDS = ["华为","小米","Apple","三星","索尼","联想","美的","格力","飞利浦","戴森","罗技","安克"];
+const ADJ = ["2025新款","升级版","旗舰","高性价比","热卖","超薄","大容量","智能"];
+const UNITS = ["件","台","个","套"];
+const SPECS = ["Pro","Max","青春版","Plus","Lite","标准版"];
+const PLATFORMS = ["jd","taobao","pdd"];
+const SEARCH_URLS = {
+  jd: k => "https://search.jd.com/Search?keyword=" + encodeURIComponent(k),
+  taobao: k => "https://s.taobao.com/search?q=" + encodeURIComponent(k),
+  pdd: k => "https://mobile.yangkeduo.com/search_result.html?search_key=" + encodeURIComponent(k)
+};
+
+function hashStr(s){
+  let h = 2166136261 >>> 0;
+  for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(a){
+  return function(){
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const randInt = (rng,lo,hi) => lo + Math.floor(rng() * (hi - lo + 1));
+const uniform = (rng,lo,hi) => lo + rng() * (hi - lo);
+const round2 = v => Math.round(v * 100) / 100;
+const esc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const fmtSales = n => n >= 10000 ? (n/10000).toFixed(1) + "万" : Number(n).toLocaleString();
+
+/* —— 采集（确定性模拟，复刻后端 mock 逻辑）—— */
+function collect(keyword, limit){
+  const rng = mulberry32(hashStr(keyword));
+  const products = [];
+  for (const platform of PLATFORMS){
+    const n = Math.max(3, limit - 1 + Math.floor(rng()*3));
+    for (let i=0;i<n;i++){
+      const brand = BRANDS[Math.floor(rng()*BRANDS.length)];
+      const adj = ADJ[Math.floor(rng()*ADJ.length)];
+      const unit = UNITS[Math.floor(rng()*UNITS.length)];
+      const spec = SPECS[Math.floor(rng()*SPECS.length)];
+      const title = brand + " " + keyword + " " + spec + " " + adj + " " + (Math.floor(rng()*12)+1) + unit + "装";
+      const base = 30 + (hashStr(keyword + platform) % 4000) / 10;
+      let price = Math.max(9.9, round2(base + uniform(rng,-20,120)));
+      const sales = randInt(rng, 200, 200000);
+      const shop_rating = round2(uniform(rng, 3.6, 5.0));
+      products.push({
+        platform, title, price, sales, shop_rating,
+        shop_name: brand + "官方" + platform + "店",
+        product_id: platform + "-mock-" + hashStr(keyword + title).toString(16),
+        url: SEARCH_URLS[platform](keyword)
+      });
+    }
+  }
+  return products;
+}
+
+/* —— 清洗 / 去重 / 排序 / 评分 / 趋势 —— */
+function normalizeTitle(t){
+  return String(t).replace(/\s+/g,"")
+    .replace(/官方旗舰店|旗舰店|专卖店|自营|正品|包邮|全新|直营|补贴|plus会员|京东|淘宝|天猫|拼多多/gi,"")
+    .toLowerCase();
+}
+function clean(products){
+  return products.filter(p => p.title && p.title.trim() && p.price > 0).map(p => {
+    p.title = p.title.trim().replace(/\s+/g," ");
+    if (!(p.shop_rating > 0 && p.shop_rating <= 5)) p.shop_rating = 4.5;
+    if (p.sales < 0) p.sales = 0;
+    return p;
+  });
+}
+function dedupe(products){
+  const seen = {};
+  const out = [];
+  for (const p of products){
+    const key = p.platform + "|" + normalizeTitle(p.title);
+    if (!(key in seen)){ seen[key] = out.length; out.push(p); }
+    else {
+      const old = out[seen[key]];
+      if ((p.shop_name && !old.shop_name) || p.sales > old.sales) out[seen[key]] = p;
+    }
+  }
+  return out;
+}
+function scoreProducts(products){
+  products.sort((a,b) => (a.price - b.price) || (b.sales - a.sales));
+  const prices = products.map(p=>p.price), ratings = products.map(p=>p.shop_rating), logSales = products.map(p=>Math.log1p(p.sales));
+  const pmin=Math.min(...prices), pmax=Math.max(...prices);
+  const rmin=Math.min(...ratings), rmax=Math.max(...ratings);
+  const smin=Math.min(...logSales), smax=Math.max(...logSales);
+  const norm=(v,lo,hi)=> hi===lo ? 0 : (v-lo)/(hi-lo);
+  const q1 = [...prices].sort((a,b)=>a-b)[Math.max(0, Math.floor(prices.length/4))];
+  return products.map((p,rank)=>{
+    const rating_n=norm(p.shop_rating,rmin,rmax), sales_n=norm(Math.log1p(p.sales),smin,smax);
+    const price_score = 1 - norm(p.price,pmin,pmax);
+    const score = round2(100*(0.35*rating_n + 0.35*sales_n + 0.30*price_score));
+    let label;
+    if (score >= 72) label = "性价比推荐";
+    else if (p.price <= q1) label = "价格优势";
+    else if (p.shop_rating >= 4.7) label = "评分优势";
+    else label = "一般";
+    return Object.assign({}, p, { price_rank: rank+1, value_score: score, value_label: label });
+  });
+}
+function trendFor(p, days){
+  days = days || 7;
+  const rng = mulberry32(hashStr(p.product_id || p.title));
+  const start = p.price * uniform(rng, 0.88, 1.18);
+  const trend = [];
+  for (let i=0;i<days;i++){
+    const t = days === 1 ? 0 : i/(days-1);
+    const base = start + (p.price - start) * t;
+    const noise = uniform(rng, -0.03, 0.03) * p.price;
+    trend.push(Math.max(0.01, round2(base + noise)));
+  }
+  trend[days-1] = round2(p.price);
+  return trend;
+}
+function computeStats(results){
+  const prices = results.map(r=>r.price);
+  const best = results.reduce((a,b)=> a.value_score > b.value_score ? a : b, results[0]);
+  const cheapest = results[0];
+  return {
+    total: results.length,
+    platforms: [...new Set(results.map(r=>r.platform))].sort(),
+    price_min: Math.min(...prices),
+    price_max: Math.max(...prices),
+    price_avg: prices.reduce((a,b)=>a+b,0)/prices.length,
+    cheapest_title: cheapest ? cheapest.title : "",
+    cheapest_price: cheapest ? cheapest.price : 0,
+    best_value_title: best ? best.title : "",
+    best_value_score: best ? best.value_score : 0,
+    recommended_count: results.filter(r=>r.value_label==="性价比推荐").length
+  };
+}
+function runSearch(keyword, limit){
+  const raw = collect(keyword, limit);
+  const results = scoreProducts(dedupe(clean(raw))).map(r => Object.assign({}, r, { trend: trendFor(r) }));
+  return { keyword, raw: raw.slice(0,6), results, stats: computeStats(results) };
+}
+
+/* —— 渲染 —— */
+function statsHTML(s){
+  return `<div class="cards">
+    <div class="card"><div class="k">采集商品数</div><div class="v">${s.total}</div></div>
+    <div class="card"><div class="k">最低价</div><div class="v">¥${s.price_min.toFixed(2)}</div></div>
+    <div class="card"><div class="k">平均价</div><div class="v">¥${s.price_avg.toFixed(2)}</div></div>
+    <div class="card"><div class="k">最高价</div><div class="v">¥${s.price_max.toFixed(2)}</div></div>
+    <div class="card"><div class="k">性价比推荐</div><div class="v">${s.recommended_count}<small> 款</small></div></div>
+  </div>`;
+}
+function barHTML(results){
+  const max = Math.max(...results.map(r=>r.price)) || 1;
+  return `<div class="bars">` + results.map(r=>{
+    const w = Math.max(3, r.price/max*100);
+    const color = r.value_label === "性价比推荐" ? "#0a7d34" : "#60a5fa";
+    return `<div class="bar-row">
+      <span class="bar-label">${PLATFORM_NAMES[r.platform]||r.platform}·${esc(r.title.slice(0,10))}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${w.toFixed(1)}%;background:${color}"></span></span>
+      <span class="bar-val">¥${r.price.toFixed(2)}</span>
+    </div>`;
+  }).join("") + `</div>`;
+}
+function trendHTML(results){
+  const top = [...results].sort((a,b)=>b.value_score-a.value_score).slice(0,5);
+  if (!top.length) return '<div style="color:#8a94a6">暂无数据</div>';
+  const W=560, H=240, padL=46, padR=14, padT=14, padB=30;
+  const days = top[0].trend.length;
+  const all = top.flatMap(t=>t.trend);
+  let lo=Math.min(...all), hi=Math.max(...all);
+  if (hi-lo < 1){ const m=(hi+lo)/2; lo=m-0.5; hi=m+0.5; }
+  const x = i => padL + (W-padL-padR) * (days===1 ? 0 : i/(days-1));
+  const y = v => padT + (H-padT-padB) * (1 - (v-lo)/(hi-lo));
+  let s = "";
+  for (let gy=0; gy<=4; gy++){
+    const val = lo + (hi-lo)*gy/4, yy = y(val);
+    s += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#eef1f6" stroke-width="1"/>`;
+    s += `<text x="${padL-6}" y="${yy+4}" text-anchor="end" font-size="10" fill="#8a94a6">${val.toFixed(0)}</text>`;
+  }
+  top.forEach((p,i)=>{
+    const pts = p.trend.map((v,j)=> x(j).toFixed(1)+","+y(v).toFixed(1)).join(" ");
+    s += `<polyline points="${pts}" fill="none" stroke="${LINE_COLORS[i%LINE_COLORS.length]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  });
+  const labels = ["T-6","T-5","T-4","T-3","T-2","T-1","今日"].slice(-days);
+  labels.forEach((lb,i)=>{ s += `<text x="${x(i)}" y="${H-padB+16}" text-anchor="middle" font-size="10" fill="#8a94a6">${lb}</text>`; });
+  const legend = '<div class="legend">' + top.map((p,i)=>
+    `<span><i style="background:${LINE_COLORS[i%LINE_COLORS.length]}"></i>${esc(p.title.slice(0,16))}</span>`).join("") + '</div>';
+  return `<svg viewBox="0 0 ${W} ${H}" class="trend-svg">${s}</svg>${legend}`;
+}
+function tableHTML(results){
+  const rows = results.map(r=>{
+    const color = BADGE_COLORS[r.value_label] || "#6c757d";
+    return `<tr>
+      <td class="num">${r.price_rank}</td>
+      <td>${PLATFORM_NAMES[r.platform]||r.platform}</td>
+      <td>${esc(r.title)}</td>
+      <td class="num"><b>¥${r.price.toFixed(2)}</b></td>
+      <td class="num">${fmtSales(r.sales)}</td>
+      <td class="num">${r.shop_rating.toFixed(1)}</td>
+      <td class="num">${r.value_score.toFixed(1)}</td>
+      <td><span class="badge" style="background:${color}">${r.value_label}</span></td>
+      <td><a href="${esc(r.url)}" target="_blank" rel="noopener">查看</a></td>
+    </tr>`;
+  }).join("");
+  return `<table><thead><tr>
+    <th>#</th><th>平台</th><th>商品名称</th><th>价格</th><th>销量</th><th>评分</th><th>性价比分</th><th>标注</th><th>链接</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+}
+function reportBodyHTML(report){
+  return statsHTML(report.stats) +
+    `<div class="grid">
+      <div class="panel"><h2>价格横向对比（升序）</h2>${barHTML(report.results)}</div>
+      <div class="panel"><h2>价格趋势（性价比 Top5）</h2>${trendHTML(report.results)}</div>
+    </div>
+    <div class="panel" style="margin-top:16px;"><h2>商品明细（按价格从低到高）</h2>${tableHTML(report.results)}</div>`;
+}
+function renderReport(report, container, title, badgeText){
+  container.innerHTML = `<div class="section-title">📊 ${esc(title)}
+      <span class="badge" style="background:#3730a3">${esc(badgeText)}</span></div>` + reportBodyHTML(report);
+}
+function renderSample(report){
+  const rawHTML = report.raw.map(p=>`<div class="raw-item">
+      <span class="tag">${PLATFORM_NAMES[p.platform]||p.platform}</span>
+      <div class="t">${esc(p.title)}</div>
+      <div class="meta">¥${p.price.toFixed(2)} ｜ 销量 ${fmtSales(p.sales)} ｜ 评分 ${p.shop_rating}</div>
+      <div class="meta">店铺：${esc(p.shop_name)}</div>
+      <a href="${esc(p.url)}" target="_blank" rel="noopener">查看链接</a>
+    </div>`).join("");
+  document.getElementById("sample-area").innerHTML =
+    `<div class="section-title">🧪 初始化示例（关键词：${esc(report.keyword)}）</div>
+    <div class="two-col">
+      <div class="panel"><h2>① 数据示例 — 原始采集记录</h2><div class="raw-grid">${rawHTML}</div></div>
+      <div class="panel"><h2>② 结果示例 — 清洗 · 排序 · 分析后</h2><div id="sample-slot"></div></div>
+    </div>`;
+  renderReport(report, document.getElementById("sample-slot"), "结果示例", "示例");
+}
+function run(){
+  const keyword = document.getElementById("keyword").value.trim();
+  if (!keyword){ alert("请先输入关键词"); return; }
+  const limit = parseInt(document.getElementById("limit").value, 10) || 8;
+  const report = runSearch(keyword, Math.min(30, Math.max(3, limit)));
+  renderReport(report, document.getElementById("result-area"), "采集结果 — " + keyword, "离线运行");
+}
+
+document.getElementById("run").addEventListener("click", run);
+document.getElementById("keyword").addEventListener("keydown", e => { if (e.key === "Enter") run(); });
+
+renderSample(runSearch("蓝牙耳机", 8));
+})();
+</script>
+</body>
+</html>

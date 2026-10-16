@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>电商价格采集与对比 · 演示</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>🛒 电商商品价格采集与对比工具</h1>
+    <p>支持京东 / 淘宝 / 拼多多（演示数据源）批量采集关键词商品，自动清洗去重、按价格升序排序，
+      提供横向对比、价格趋势图与性价比推荐标注。</p>
+  </div>
+
+  <div class="control">
+    <input type="text" id="keyword" placeholder="输入关键词，如：蓝牙耳机、机械键盘、保温杯…" value="">
+    <select id="source">
+      <option value="mock">数据源：演示数据</option>
+      <option value="auto">数据源：真实平台(失败降级)</option>
+      <option value="jd">数据源：京东</option>
+      <option value="taobao">数据源：淘宝</option>
+      <option value="pdd">数据源：拼多多</option>
+    </select>
+    <input type="number" id="limit" value="8" min="3" max="30" title="每平台采集条数">
+    <button id="run">开始采集</button>
+  </div>
+  <div class="hint" id="status-hint">
+    下方为初始化示例：左侧是「数据示例」（原始采集记录），右侧是「结果示例」（清洗、排序、分析后的完整结果）。
+  </div>
+  <div class="spinner" id="spinner"></div>
+  <div id="warn-box"></div>
+
+  <div id="sample-area"></div>
+  <div id="result-area"></div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

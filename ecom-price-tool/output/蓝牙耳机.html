@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>价格对比报告 · 蓝牙耳机</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root { --bg:#f5f7fa; --card:#fff; --line:#e6e9ef; --text:#1f2733; --muted:#6b7280; --accent:#2563eb; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+.wrap { max-width:1180px; margin:0 auto; padding:24px 20px 60px; }
+header { background:linear-gradient(135deg,#1e3a8a,#2563eb); color:#fff; padding:28px 24px; border-radius:14px; }
+header h1 { margin:0 0 6px; font-size:24px; }
+header p { margin:0; opacity:.85; font-size:13px; }
+.warn { background:#fff7e0; color:#8a5d00; padding:10px 14px; border-radius:10px; margin:16px 0; font-size:13px; border:1px solid #ffe2a8; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:20px 0; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+.card .k { font-size:12px; color:var(--muted); }
+.card .v { font-size:22px; font-weight:700; margin-top:6px; }
+.card .v small { font-size:12px; font-weight:400; color:var(--muted); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:860px) { .grid { grid-template-columns:1fr; } }
+.panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+.panel h2 { font-size:15px; margin:0 0 14px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--muted); font-weight:600; white-space:nowrap; }
+.badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; color:#fff; }
+a { color:var(--accent); text-decoration:none; }
+tr:hover td { background:#f8fafc; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🛒 价格采集与对比报告</h1>
+  <p>关键词：<b>蓝牙耳机</b> ｜ 生成时间：2026-10-16 07:27:45 ｜ 数据源：mock</p>
+</header>
+
+<div class="cards">
+  <div class="card"><div class="k">采集商品数</div><div class="v">17</div></div>
+  <div class="card"><div class="k">最低价</div><div class="v">¥27.3</div></div>
+  <div class="card"><div class="k">平均价</div><div class="v">¥220.37</div></div>
+  <div class="card"><div class="k">最高价</div><div class="v">¥449.36</div></div>
+  <div class="card"><div class="k">性价比推荐</div><div class="v">3<small> 款</small></div></div>
+</div>
+<div class="grid">
+  <div class="panel"><h2>价格横向对比（升序）</h2><canvas id="bar" height="260"></canvas></div>
+  <div class="panel"><h2>价格趋势（性价比 Top5）</h2><canvas id="trend" height="260"></canvas></div>
+</div>
+<div class="panel" style="margin-top:16px;"><h2>商品明细（按价格从低到高）</h2>
+<table>
+<thead><tr><th>#</th><th>平台</th><th>商品名称</th><th>价格</th><th>销量</th><th>评分</th><th>性价比分</th><th>标注</th><th>链接</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+<script>
+const DATA = {"rows": [{"rank": 1, "platform": "京东", "title": "联想 蓝牙耳机 青春版 高性价比 7件装", "price": 27.3, "sales": 187124, "rating": 4.5, "score": 88.5, "label": "性价比推荐", "url": "https://search.jd.com/Search?keyword=蓝牙耳机"}, {"rank": 2, "platform": "京东", "title": "格力 蓝牙耳机 标准版 高性价比 2台装", "price": 51.83, "sales": 150290, "rating": 4.3, "score": 77.7, "label": "性价比推荐", "url": "https://search.jd.com/Search?keyword=蓝牙耳机"}, {"rank": 3, "platform": "京东", "title": "罗技 蓝牙耳机 Max 旗舰 1个装", "price": 65.19, "sales": 132688, "rating": 3.8, "score": 61.2, "label": "价格优势", "url": "https://search.jd.com/Search?keyword=蓝牙耳机"}, {"rank": 4, "platform": "京东", "title": "Apple 蓝牙耳机 Lite 大容量 1个装", "price": 92.11, "sales": 50171, "rating": 4.0, "score": 48.5, "label": "价格优势", "url": "https://search.jd.com/Search?keyword=蓝牙耳机"}, {"rank": 5, "platform": "淘宝", "title": "飞利浦 蓝牙耳机 青春版 升级版 10件装", "price": 106.15, "sales": 25992, "rating": 4.5, "score": 50.0, "label": "价格优势", "url": "https://s.taobao.com/search?q=蓝牙耳机"}, {"rank": 6, "platform": "京东", "title": "美的 蓝牙耳机 Max 旗舰 1套装", "price": 109.62, "sales": 61465, "rating": 4.1, "score": 53.3, "label": "一般", "url": "https://search.jd.com/Search?keyword=蓝牙耳机"}, {"rank": 7, "platform": "淘宝", "title": "华为 蓝牙耳机 标准版 旗舰 8台装", "price": 141.39, "sales": 129865, "rating": 4.9, "score": 85.0, "label": "性价比推荐", "url": "https://s.taobao.com/search?q=蓝牙耳机"}, {"rank": 8, "platform": "淘宝", "title": "飞利浦 蓝牙耳机 标准版 升级版 4件装", "price": 167.18, "sales": 73440, "rating": 4.1, "score": 52.2, "label": "一般", "url": "https://s.taobao.com/search?q=蓝牙耳机"}, {"rank": 9, "platform": "淘宝", "title": "联想 蓝牙耳机 Max 高性价比 3个装", "price": 177.07, "sales": 93041, "rating": 4.6, "score": 68.9, "label": "一般", "url": "https://s.taobao.com/search?q=蓝牙耳机"}, {"rank": 10, "platform": "淘宝", "title": "小米 蓝牙耳机 青春版 大容量 5件装", "price": 179.5, "sales": 108094, "rating": 4.6, "score": 71.2, "label": "一般", "url": "https://s.taobao.com/search?q=蓝牙耳机"}, {"rank": 11, "platform": "淘宝", "title": "Apple 蓝牙耳机 标准版 旗舰 2套装", "price": 196.13, "sales": 37235, "rating": 4.4, "score": 46.9, "label": "一般", "url": "https://s.taobao.com/search?q=蓝牙耳机"}, {"rank": 12, "platform": "拼多多", "title": "飞利浦 蓝牙耳机 Max 升级版 6台装", "price": 349.84, "sales": 24240, "rating": 4.7, "score": 37.0, "label": "评分优势", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=蓝牙耳机"}, {"rank": 13, "platform": "拼多多", "title": "华为 蓝牙耳机 Max 智能 5件装", "price": 373.09, "sales": 157149, "rating": 4.1, "score": 50.2, "label": "一般", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=蓝牙耳机"}, {"rank": 14, "platform": "拼多多", "title": "小米 蓝牙耳机 Plus 旗舰 9台装", "price": 401.6, "sales": 99890, "rating": 4.0, "score": 38.0, "label": "一般", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=蓝牙耳机"}, {"rank": 15, "platform": "拼多多", "title": "安克 蓝牙耳机 Pro 智能 4个装", "price": 410.35, "sales": 23859, "rating": 4.6, "score": 29.7, "label": "一般", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=蓝牙耳机"}, {"rank": 16, "platform": "拼多多", "title": "罗技 蓝牙耳机 Lite 升级版 11件装", "price": 448.51, "sales": 28939, "rating": 3.6, "score": 3.3, "label": "一般", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=蓝牙耳机"}, {"rank": 17, "platform": "拼多多", "title": "罗技 蓝牙耳机 Max 2025新款 1套装", "price": 449.36, "sales": 196125, "rating": 4.7, "score": 64.6, "label": "评分优势", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=蓝牙耳机"}], "trendTop": [{"title": "联想 蓝牙耳机 青春版 高性价比 7件装", "trend": [30.31, 29.76, 29.27, 29.2, 28.34, 27.83, 27.3]}, {"title": "华为 蓝牙耳机 标准版 旗舰 8台装", "trend": [129.84, 132.36, 136.82, 133.87, 136.37, 139.11, 141.39]}, {"title": "格力 蓝牙耳机 标准版 高性价比 2台装", "trend": [57.55, 56.5, 55.56, 55.44, 53.8, 52.84, 51.83]}, {"title": "小米 蓝牙耳机 青春版 大容量 5件装", "trend": [164.84, 168.04, 173.7, 169.95, 173.12, 176.61, 179.5]}, {"title": "联想 蓝牙耳机 Max 高性价比 3个装", "trend": [162.61, 165.76, 171.35, 167.65, 170.78, 174.22, 177.07]}], "badge": {"性价比推荐": "#0a7d34", "价格优势": "#0d6efd", "评分优势": "#8a5cf6", "一般": "#6c757d"}};
+const tbody = document.getElementById('tbody');
+tbody.innerHTML = DATA.rows.map(r => `<tr>
+  <td>${r.rank}</td>
+  <td>${r.platform}</td>
+  <td>${r.title}</td>
+  <td><b>¥${r.price}</b></td>
+  <td>${r.sales.toLocaleString()}</td>
+  <td>${r.rating}</td>
+  <td>${r.score}</td>
+  <td><span class="badge" style="background:${DATA.badge[r.label] || '#6c757d'}">${r.label}</span></td>
+  <td><a href="${r.url}" target="_blank" rel="noopener">查看</a></td>
+</tr>`).join('');
+
+if (window.Chart) {
+  new Chart(document.getElementById('bar'), {
+    type: 'bar',
+    data: {
+      labels: DATA.rows.map(r => r.platform + '·' + r.title.slice(0, 10)),
+      datasets: [{
+        label: '价格(¥)',
+        data: DATA.rows.map(r => r.price),
+        backgroundColor: DATA.rows.map(r => r.label === '性价比推荐' ? '#0a7d34' : '#60a5fa')
+      }]
+    },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } },
+      scales: { x: { title: { display: true, text: '价格 (¥)' } } } }
+  });
+
+  const colors = ['#2563eb', '#f59e0b', '#0a7d34', '#dc2626', '#8a5cf6'];
+  const days = DATA.trendTop.length ? DATA.trendTop[0].trend.length : 0;
+  new Chart(document.getElementById('trend'), {
+    type: 'line',
+    data: {
+      labels: Array.from({ length: days }, (_, i) => i === days - 1 ? '今日' : 'T-' + (days - 1 - i)),
+      datasets: DATA.trendTop.map((p, i) => ({
+        label: p.title, data: p.trend, borderColor: colors[i % colors.length],
+        tension: .3, pointRadius: 2, borderWidth: 2, fill: false
+      }))
+    },
+    options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
+      scales: { y: { title: { display: true, text: '价格 (¥)' } } } }
+  });
+}
+</script>
+</body>
+</html>

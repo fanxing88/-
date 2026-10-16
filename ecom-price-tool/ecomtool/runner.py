@@ -20,13 +20,14 @@ def run_search(
     limit: int = DEFAULT_LIMIT_PER_PLATFORM,
     cookies: str = "",
     timeout: int = 8,
+    headless: bool = True,
     record_history: bool = True,
 ) -> SearchReport:
     """执行一次完整搜索任务。
 
     参数：
     - keyword: 搜索关键词
-    - source:  数据源（mock / auto / jd / taobao / pdd）
+    - source:  数据源（mock / auto / browser / jd / taobao / pdd）
     - limit:   每平台采集条数上限
     - cookies: 可选登录态 Cookie（真实平台采集时注入）
     - record_history: 是否写入价格历史快照（用于价格趋势）
@@ -36,7 +37,7 @@ def run_search(
         raise ValueError("关键词不能为空")
 
     products, source_mode, fallback_reason = collect(
-        keyword, source=source, limit=limit, cookies=cookies, timeout=timeout
+        keyword, source=source, limit=limit, cookies=cookies, timeout=timeout, headless=headless
     )
 
     cleaned = clean(products)

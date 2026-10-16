@@ -23,6 +23,7 @@ VALUE_SCORE_THRESHOLD = 72.0
 TREND_DAYS = 7                 # 展示近 N 日价格曲线
 TREND_BACKFILL = True          # 首次采集时是否合成模拟历史曲线
 HISTORY_FILE = "data/history.json"
+AUTH_DIR = "data/auth"  # 浏览器自动化登录态保存目录
 
 # 网络请求参数
 HTTP_TIMEOUT = 8               # 秒

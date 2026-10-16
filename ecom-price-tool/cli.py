@@ -6,6 +6,10 @@
     python cli.py "蓝牙耳机" --source mock --limit 10
     python cli.py "蓝牙耳机" -o json -o csv -o html
     python cli.py "蓝牙耳机" --cookies "your_cookie_string"
+
+    # 浏览器自动化真实抓取（先装：pip install playwright && playwright install chromium）
+    python cli.py "蓝牙耳机" --source browser --login    # 首次扫码登录并保存登录态
+    python cli.py "蓝牙耳机" --source browser --headed   # 显示浏览器窗口抓取（便于手动过验证码）
 """
 from __future__ import annotations
 
@@ -103,8 +107,8 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--source",
         default="mock",
-        choices=["mock", "auto", "jd", "taobao", "pdd"],
-        help="数据源：mock=演示数据(默认)，auto=真实平台失败后降级",
+        choices=["mock", "auto", "browser", "jd", "taobao", "pdd"],
+        help="数据源：mock=演示数据(默认)，browser=浏览器自动化真抓，auto=普通HTTP尝试后降级",
     )
     parser.add_argument("--limit", type=int, default=8, help="每平台采集条数上限（默认 8）")
     parser.add_argument(
@@ -115,7 +119,15 @@ def main(argv=None) -> int:
     parser.add_argument("--cookies", default="", help="真实平台登录态 Cookie（可选）")
     parser.add_argument("--timeout", type=int, default=8, help="网络超时秒数（默认 8）")
     parser.add_argument("--no-history", action="store_true", help="不写入价格历史快照")
+    parser.add_argument("--headed", action="store_true", help="浏览器抓取时显示窗口（便于手动过验证码）")
+    parser.add_argument("--login", action="store_true", help="扫码登录各平台并保存登录态（配合 --source browser）")
     args = parser.parse_args(argv)
+
+    if args.login:
+        from ecomtool.collectors.browser import login_all
+        login_all()
+        if not args.keyword:
+            return 0
 
     if not args.keyword:
         parser.print_help()
@@ -128,6 +140,7 @@ def main(argv=None) -> int:
             limit=args.limit,
             cookies=args.cookies,
             timeout=args.timeout,
+            headless=not args.headed,
             record_history=not args.no_history,
         )
     except ValueError as e:

@@ -1,0 +1,5 @@
+# 基础运行：零依赖（仅用 Python 标准库）
+#
+# 浏览器自动化真实抓取（京东/淘宝/拼多多）需要额外安装：
+playwright>=1.40
+# 安装后执行：playwright install chromium

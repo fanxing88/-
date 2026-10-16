@@ -1,9 +1,10 @@
 """采集器注册表与工厂。
 
 source 取值：
-- "mock":   直接使用演示数据（默认，保证开箱即用）
-- "auto":   依次尝试 jd/taobao/pdd 真实抓取，全部失败时降级到 mock
-- 具体平台: 只抓取指定平台，失败时降级到 mock
+- "mock":    直接使用演示数据（默认，保证开箱即用）
+- "browser": 用 Playwright 驱动真实浏览器抓取 jd/taobao/pdd，失败降级到 mock
+- "auto":    用普通 HTTP 依次尝试 jd/taobao/pdd，全部失败时降级到 mock
+- 具体平台:  只抓取指定平台，失败时降级到 mock
 """
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ _COLLECTORS = {
     "mock": MockCollector,
 }
 
-SUPPORTED_SOURCES = ("mock", "auto", "jd", "taobao", "pdd")
+SUPPORTED_SOURCES = ("mock", "auto", "browser", "jd", "taobao", "pdd")
 
 
 def collect(
@@ -32,6 +33,7 @@ def collect(
     limit: int = 8,
     cookies: str = "",
     timeout: int = 8,
+    headless: bool = True,
 ) -> Tuple[List[Product], str, str]:
     """按关键词采集商品。
 
@@ -44,6 +46,9 @@ def collect(
 
     if source == "mock":
         return MockCollector().search(keyword, limit), "mock", ""
+
+    if source == "browser":
+        return _collect_browser(keyword, limit, headless)
 
     platforms = list(_COLLECTORS) if source == "auto" else [source]
     if source == "auto":
@@ -68,4 +73,31 @@ def collect(
     # 全部失败 -> 降级演示数据
     fallback = MockCollector().search(keyword, limit)
     reason = "真实平台采集失败，已降级到演示数据。 " + "; ".join(reasons) if reasons else ""
+    return fallback, "mock(fallback)", reason
+
+
+def _collect_browser(
+    keyword: str, limit: int, headless: bool
+) -> Tuple[List[Product], str, str]:
+    """用浏览器自动化抓取三个平台，聚合结果，失败平台降级。"""
+    from .browser import JdBrowserCollector, PddBrowserCollector, TaobaoBrowserCollector
+
+    collectors = [
+        JdBrowserCollector(headless=headless),
+        TaobaoBrowserCollector(headless=headless),
+        PddBrowserCollector(headless=headless),
+    ]
+    collected: List[Product] = []
+    reasons: List[str] = []
+    for c in collectors:
+        try:
+            collected.extend(c.search(keyword, limit))
+        except CollectError as e:
+            reasons.append(f"{c.platform}: {e}")
+
+    if collected:
+        return collected, "browser", "; ".join(reasons)
+
+    fallback = MockCollector().search(keyword, limit)
+    reason = "浏览器抓取失败，已降级到演示数据。 " + "; ".join(reasons) if reasons else ""
     return fallback, "mock(fallback)", reason

@@ -74,6 +74,8 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/search":
             self._handle_search(parsed.query)
+        elif parsed.path == "/api/login":
+            self._handle_login(parsed.query)
         elif parsed.path == "/api/sample":
             self._send_json(build_sample())
         elif parsed.path.startswith("/api/"):
@@ -88,16 +90,32 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({"error": "关键词不能为空"}, status=400)
             return
         source = params.get("source", ["mock"])[0]
+        headless = params.get("headless", ["1"])[0] not in ("0", "false", "False")
         try:
             limit = int(params.get("limit", ["8"])[0])
         except ValueError:
             limit = 8
         try:
-            report = run_search(keyword, source=source, limit=limit)
+            report = run_search(keyword, source=source, limit=limit, headless=headless)
         except Exception as e:  # noqa: BLE001
             self._send_json({"error": str(e)}, status=500)
             return
         self._send_json(report.to_dict())
+
+    def _handle_login(self, query: str) -> None:
+        params = urllib.parse.parse_qs(query)
+        platform = params.get("platform", ["jd"])[0]
+        try:
+            from ecomtool.collectors.browser import login
+            ok = login(platform)
+            self._send_json(
+                {
+                    "ok": ok,
+                    "message": f"{platform} 登录态已保存" if ok else f"{platform} 未检测到登录成功，请重试",
+                }
+            )
+        except Exception as e:  # noqa: BLE001
+            self._send_json({"ok": False, "error": str(e)}, status=500)
 
     def log_message(self, fmt, *args):  # noqa: A002
         sys.stderr.write("[web] %s\n" % (fmt % args))

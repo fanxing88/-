@@ -197,6 +197,8 @@
     }
     const source = document.getElementById("source").value;
     const limit = document.getElementById("limit").value || "8";
+    const headed = document.getElementById("headed").checked;
+    const headless = headed ? "0" : "1";
     const btn = document.getElementById("run");
     const spinner = document.getElementById("spinner");
 
@@ -205,7 +207,7 @@
     document.getElementById("warn-box").innerHTML = "";
 
     try {
-      const qs = new URLSearchParams({ keyword, source, limit });
+      const qs = new URLSearchParams({ keyword, source, limit, headless });
       const resp = await fetch("/api/search?" + qs.toString());
       const data = await resp.json();
       if (!resp.ok) {
@@ -237,6 +239,27 @@
   document.getElementById("keyword").addEventListener("keydown", (e) => {
     if (e.key === "Enter") runSearch();
   });
+
+  document.getElementById("login").addEventListener("click", loginAll);
+
+  async function loginAll() {
+    const platforms = ["jd", "taobao", "pdd"];
+    const btn = document.getElementById("login");
+    const warnBox = document.getElementById("warn-box");
+    btn.disabled = true;
+    for (const p of platforms) {
+      warnBox.innerHTML = `<div class="hint">正在登录「${p}」，请在弹出的浏览器窗口扫码登录……</div>`;
+      try {
+        const resp = await fetch("/api/login?platform=" + p);
+        const data = await resp.json();
+        warnBox.innerHTML = `<div class="${data.ok ? "hint" : "warn"}">${esc(data.message || data.error)}</div>`;
+      } catch (e) {
+        warnBox.innerHTML = `<div class="warn">登录失败：${esc(e.message)}</div>`;
+        break;
+      }
+    }
+    btn.disabled = false;
+  }
 
   loadSample();
 })();

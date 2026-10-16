@@ -69,6 +69,9 @@ body {
 }
 .control button:hover { background: var(--accent-2); }
 .control button:disabled { opacity: .6; cursor: not-allowed; }
+.control .chk { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); white-space:nowrap; }
+.control button.secondary { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+.control button.secondary:hover { background:#eef2ff; }
 
 .hint {
   background: #eef2ff;

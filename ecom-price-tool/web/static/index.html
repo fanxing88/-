@@ -20,13 +20,16 @@
     <input type="text" id="keyword" placeholder="输入关键词，如：蓝牙耳机、机械键盘、保温杯…" value="">
     <select id="source">
       <option value="mock">数据源：演示数据</option>
-      <option value="auto">数据源：真实平台(失败降级)</option>
+      <option value="browser">数据源：真实抓取（浏览器自动化）</option>
+      <option value="auto">数据源：普通HTTP尝试</option>
       <option value="jd">数据源：京东</option>
       <option value="taobao">数据源：淘宝</option>
       <option value="pdd">数据源：拼多多</option>
     </select>
+    <label class="chk"><input type="checkbox" id="headed" checked> 有头模式</label>
     <input type="number" id="limit" value="8" min="3" max="30" title="每平台采集条数">
     <button id="run">开始采集</button>
+    <button id="login" class="secondary">扫码登录</button>
   </div>
   <div class="hint" id="status-hint">
     下方为初始化示例：左侧是「数据示例」（原始采集记录），右侧是「结果示例」（清洗、排序、分析后的完整结果）。

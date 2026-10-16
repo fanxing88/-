@@ -20,6 +20,7 @@ def run_search(
     limit: int = DEFAULT_LIMIT_PER_PLATFORM,
     cookies: str = "",
     timeout: int = 8,
+    headless: bool = True,
     record_history: bool = True,
 ) -> SearchReport:
     """执行一次完整搜索任务。
@@ -36,7 +37,7 @@ def run_search(
         raise ValueError("关键词不能为空")
 
     products, source_mode, fallback_reason = collect(
-        keyword, source=source, limit=limit, cookies=cookies, timeout=timeout
+        keyword, source=source, limit=limit, cookies=cookies, timeout=timeout, headless=headless
     )
 
     cleaned = clean(products)
